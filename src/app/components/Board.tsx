@@ -4,8 +4,6 @@ import WordTile from "./WordTile";
 import GuessControls from "./GuessControls";
 import SolvedGroup from "./SolvedGroup";
 
-// TODO: update this with Chat's instructions
-
 // Every word has an ID and its actual text
 export interface Word {
     id: string,
@@ -17,6 +15,7 @@ export interface Word {
 export interface SolvedCategory {
     id: string,
     title: string,
+    difficulty: number,
     words: Word[],
 }
 
@@ -50,12 +49,13 @@ interface BoardProps {
 export default function Board({puzzle}: BoardProps) {
     const [selectedIDs, setSelectedIDs] = useState<string[]>([]);
     const [solvedGroups, setSolvedGroups] = useState<SolvedCategory[]>([]);
-    const [message, setMessage] = useState("");
 
-    // Give every word a stable ID based on its group and position within group
+    // Give every word in the ts file a stable ID based on its group and position within group
+    // This is an array of four categories!
     const allGroups: SolvedCategory[] = puzzle.groups.map((group, groupIndex) => ({
         id: `group-${groupIndex}`,
         title: group.category,
+        difficulty: group.difficulty,
         words: group.words.map((text, wordIndex) => ({
             id: `${groupIndex}-${wordIndex}`,
             text: text,
@@ -65,7 +65,7 @@ export default function Board({puzzle}: BoardProps) {
     // Create a set of the solved groups (we don't care about order)
     const solvedGroupIDs = new Set(solvedGroups.map((group) => group.id));
 
-    // We are flattening the unsolved words into a static array
+    // Flatten the unsolved words into a static array
     const unsolvedWords = allGroups.filter((group) => !solvedGroupIDs.has(group.id)).flatMap((group) => group.words);
 
     // toggleSelection toggles a particular tile if not already four tiles have been toggled
@@ -89,7 +89,6 @@ export default function Board({puzzle}: BoardProps) {
 
     function clearSelection() {
         setSelectedIDs([]);
-        setMessage("");
     }
 
     // submitGuess contains all the logic to actually calculating if a submission is a correct category
@@ -117,9 +116,8 @@ export default function Board({puzzle}: BoardProps) {
         if (matchingGroup) {
             setSolvedGroups((current) => [...current, matchingGroup]);
             setSelectedIDs([]);
-            setMessage(`Correct: ${matchingGroup.title}`);
         } else {
-            setMessage("Not quite. Try another group.");
+            alert("Not quite. Try another group.");
         }
     };
 
@@ -135,9 +133,6 @@ export default function Board({puzzle}: BoardProps) {
                 </div>
             }
             
-            {/* Display a message if there is a non-null one */}
-            {message && <p className="text-center font-medium text-gray-700">{message}</p>}            
-
             {/* Guess Controls at the bottom of the board if there are still unsolved categories */}
             {unsolvedWords.length > 0 && <GuessControls selectedCount={selectedIDs.length} onSubmit={submitGuess} onClear={clearSelection}/>}
 
