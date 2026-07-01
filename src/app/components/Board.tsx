@@ -1,79 +1,35 @@
 "use client";
-import {useState} from "react";
+import { useState } from "react";
 import WordTile from "./WordTile";
 import GuessControls from "./GuessControls";
 import SolvedGroup from "./SolvedGroup";
 
-// Every word has an ID and its actual text
-export interface Word {
-    id: string,
-    text: string,
-}
-
-// A solved category has an ID, the category name, and the words in it
-// export so we're able to access it in SolvedGroup.tsx
-export interface SolvedCategory {
-    id: string,
-    title: string,
-    difficulty: number,
-    words: Word[],
-}
-
-interface PuzzleGroup {
-    category: string,
-    difficulty: number,
-    words: string[],
-}
-
-interface Puzzle {
-    id: string,
-    title: string,
-    groups: PuzzleGroup[],
-}
+import type { Puzzle, Tile } from "../../lib/game/types";
+import { checkGuess } from "../../lib/game/puzzleEngine";
 
 interface BoardProps {
     puzzle: Puzzle,
+    initialTileOrder: Tile[], // Received from page.tsx
 }
 
-// // For TypeScript (outdated)
-// interface BoardProps {
-//     words: Word[],
-
-//     // solvedGroups is optional! Array of solved categories
-//     solvedGroups?: SolvedCategory[],
-
-//     // Optional function that takes an array of selected tiles and computes to see if the category is correct
-//     onSubmitGuess?: (selectedIDs: string[]) => void,
-// }
-
-export default function Board({puzzle}: BoardProps) {
+export default function Board({puzzle, initialTileOrder}: BoardProps) {
     const [selectedIDs, setSelectedIDs] = useState<string[]>([]);
-    const [solvedGroups, setSolvedGroups] = useState<SolvedCategory[]>([]);
+    const [solvedGroupIDs, setSolvedGroupIDs] = useState<string[]>([]);
+    const [tileOrder] = useState(initialTileOrder); // Initial random shuffle of tiles
 
-    // Give every word in the ts file a stable ID based on its group and position within group
-    // This is an array of four categories!
-    const allGroups: SolvedCategory[] = puzzle.groups.map((group, groupIndex) => ({
-        id: `group-${groupIndex}`,
-        title: group.category,
-        difficulty: group.difficulty,
-        words: group.words.map((text, wordIndex) => ({
-            id: `${groupIndex}-${wordIndex}`,
-            text: text,
-        })),
-    }));
+    // Determine which categories have already been solved in the order that they solved
+    const solvedGroups = solvedGroupIDs.map((groupID) => puzzle.groups.find((group) => group.id === groupID)).filter((group): group is Puzzle["groups"][number] => group !== undefined);
 
-    // Create a set of the solved groups (we don't care about order)
-    const solvedGroupIDs = new Set(solvedGroups.map((group) => group.id));
-
-    // Flatten the unsolved words into a static array
-    const unsolvedWords = allGroups.filter((group) => !solvedGroupIDs.has(group.id)).flatMap((group) => group.words);
+    // Calculate what tiles still remain unsolved
+    const solvedGroupsSet = new Set(solvedGroupIDs);
+    const unsolvedWords = tileOrder.filter((tile) => !solvedGroupsSet.has(tile.groupId));
 
     // toggleSelection toggles a particular tile if not already four tiles have been toggled
     const toggleSelection = (id: string) => {
         setSelectedIDs((current) => {
             if (current.includes(id)) {
                 // Return the array with all elements intact except for id (effectively untoggles it)
-                return current.filter((wordID) => wordID != id);
+                return current.filter((wordID) => wordID !== id);
             }
 
             // Cannot select a tile if >= 4 are already selected
@@ -81,8 +37,7 @@ export default function Board({puzzle}: BoardProps) {
                 return current;
             }
 
-            // Otherwise, if not already selected and less than four,
-            // return the same array but with id added on
+            // Otherwise, if not already selected and less than four, return the same array but with id added on
             return [...current, id];
         });
     };
@@ -94,28 +49,13 @@ export default function Board({puzzle}: BoardProps) {
     // submitGuess contains all the logic to actually calculating if a submission is a correct category
     // It moves words from unsolvedWords to the solvedGroupIDs set
     const submitGuess = () => {
-        if (selectedIDs.length !== 4) {
-            return;
-        }
-
-        // Finds the group among all solution groups to see if any exactly matches
-        // Returns null if no matching group is found (i.e. the player is incorrect)
-        const matchingGroup = allGroups.find((group) => {
-            // If we're iterating through an already solved group, just continue
-            if (solvedGroupIDs.has(group.id)) {
-                return false;
-            }
-
-            const groupWordIDs = group.words.map((word) => word.id);
-
-            // Checks that the input (selectedIDs) not only is the same length as one of the solution categories,
-            // but also that every word in said category is in their response too
-            return (groupWordIDs.length === selectedIDs.length && groupWordIDs.every((id) => selectedIDs.includes(id)));
-        });
-
-        if (matchingGroup) {
-            setSolvedGroups((current) => [...current, matchingGroup]);
+        const result = checkGuess(selectedIDs, puzzle, solvedGroupIDs);
+        if (result.status === "correct") {
+            setSolvedGroupIDs((current) => [...current, result.group.id]);
             setSelectedIDs([]);
+        } else if (result.status === "one-away") {
+            // If one away or incorrect, push an alert message
+            alert("One away...");
         } else {
             alert("Not quite. Try another group.");
         }

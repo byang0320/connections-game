@@ -1,8 +1,7 @@
-// To be able to use SolvedCategory object
-import { SolvedCategory } from "./Board";
+import type { PuzzleGroup } from "../../lib/game/types";
 
 interface SolvedGroupProps {
-  group: SolvedCategory,
+  group: PuzzleGroup;
 }
 
 const colors = {
@@ -28,10 +27,10 @@ export default function SolvedGroup({ group }: SolvedGroupProps) {
   const color = colors[group.difficulty as keyof typeof colors];
   return (
     <div className={`rounded-lg ${color.bg} p-4`}>
-      <h2 className="text-lg font-bold">{group.title}</h2>
+      <h2 className="text-lg font-bold">{group.category}</h2>
 
       <div className="mt-2 flex flex-wrap gap-2">
-        {group.words.map((word) => <span key={word.id} className={`rounded ${color.chip} px-3 py-1 text-sm font-medium`}>{word.text}</span>)}
+        {group.words.map((word) => <span key={word} className={`rounded ${color.chip} px-3 py-1 text-sm font-medium`}>{word}</span>)}
       </div>
     </div>
   );
