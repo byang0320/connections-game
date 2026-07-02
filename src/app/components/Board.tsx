@@ -15,6 +15,7 @@ interface BoardProps {
 export default function Board({puzzle, initialTileOrder}: BoardProps) {
     const [selectedIDs, setSelectedIDs] = useState<string[]>([]);
     const [solvedGroupIDs, setSolvedGroupIDs] = useState<string[]>([]);
+    const [mistakesRemaining, setMistakesRemaining] = useState(4);
     const [tileOrder] = useState(initialTileOrder); // Initial random shuffle of tiles
 
     // Determine which categories have already been solved in the order that they solved
@@ -46,6 +47,26 @@ export default function Board({puzzle, initialTileOrder}: BoardProps) {
         setSelectedIDs([]);
     }
 
+    function handleMistake() {
+        setMistakesRemaining((currentMistakes) => {
+            const nextMistakes = currentMistakes - 1;
+
+            if (nextMistakes <= 0) {
+                setSolvedGroupIDs((currentSolvedIDs) => {
+                    // Determine which categories have yet to be solved
+                    const remainingGroupIDs = puzzle.groups.map((group) => group.id).filter((groupID) => !currentSolvedIDs.includes(groupID));
+                    // Then append it onto what the user has already solved
+                    return [...currentSolvedIDs, ...remainingGroupIDs];
+                });
+
+                setSelectedIDs([]);
+                return 0;
+            }
+
+            return nextMistakes;
+        });
+    }
+
     // submitGuess contains all the logic to actually calculating if a submission is a correct category
     // It moves words from unsolvedWords to the solvedGroupIDs set
     const submitGuess = () => {
@@ -56,8 +77,10 @@ export default function Board({puzzle, initialTileOrder}: BoardProps) {
         } else if (result.status === "one-away") {
             // If one away or incorrect, push an alert message
             alert("One away...");
+            handleMistake();
         } else {
             alert("Not quite. Try another group.");
+            handleMistake();
         }
     };
 
@@ -72,12 +95,19 @@ export default function Board({puzzle, initialTileOrder}: BoardProps) {
                     {unsolvedWords.map((word) => <WordTile key={word.id} word={word.text} selected={selectedIDs.includes(word.id)} onClick={() => toggleSelection(word.id)}/>)}
                 </div>
             }
+
+            {/* Mistakes remaining text */}
+            {mistakesRemaining > 0 && <p className="text-center text-xl">Mistakes Remaining: {mistakesRemaining}</p>}
             
             {/* Guess Controls at the bottom of the board if there are still unsolved categories */}
-            {unsolvedWords.length > 0 && <GuessControls selectedCount={selectedIDs.length} onSubmit={submitGuess} onClear={clearSelection}/>}
+            {(unsolvedWords.length > 0 && mistakesRemaining > 0) && <GuessControls selectedCount={selectedIDs.length} onSubmit={submitGuess} onClear={clearSelection}/>}
 
-            {/* Otherwise, display "You solved the board!" */}
-            {unsolvedWords.length === 0 && <p className="text-center text-xl font-bold">You solved the board!</p>}
+            {/* If the game ended, show ending text */}
+            {unsolvedWords.length === 0 && 
+                (mistakesRemaining > 0 ? 
+                <p className="text-center text-xl font-bold">You solved the board!</p> : 
+                <p className="text-center text-xl font-bold">Better luck next time!</p>)
+            }
         </div>
     );
 }
