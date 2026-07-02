@@ -27,9 +27,9 @@ export default function SolvedGroup({ group }: SolvedGroupProps) {
   const color = colors[group.difficulty as keyof typeof colors];
   return (
     <div className={`rounded-lg ${color.bg} p-4`}>
-      <h2 className="text-lg font-bold">{group.category}</h2>
+      <h2 className="text-lg font-bold text-center">{group.category}</h2>
 
-      <div className="mt-2 flex flex-wrap gap-2">
+      <div className="mt-2 flex flex-wrap gap-2 justify-center">
         {group.words.map((word) => <span key={word} className={`rounded ${color.chip} px-3 py-1 text-sm font-medium`}>{word}</span>)}
       </div>
     </div>
