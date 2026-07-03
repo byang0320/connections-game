@@ -79,7 +79,7 @@ export default function Board({puzzle, initialTileOrder}: BoardProps) {
             alert("One away...");
             handleMistake();
         } else {
-            alert("Not quite. Try another group.");
+            mistakesRemaining > 1 ? alert("Not quite. Try another group.") : alert("Not quite!");
             handleMistake();
         }
     };
@@ -97,9 +97,9 @@ export default function Board({puzzle, initialTileOrder}: BoardProps) {
             }
 
             {/* Mistakes remaining text */}
-            {mistakesRemaining > 0 && <p className="text-center text-xl">Mistakes Remaining: {mistakesRemaining}</p>}
+            <p className="text-center text-xl">Mistakes Remaining: {mistakesRemaining}</p>
             
-            {/* Guess Controls at the bottom of the board if there are still unsolved categories */}
+            {/* Guess Controls if there are still unsolved categories and mistakes remaining */}
             {(unsolvedWords.length > 0 && mistakesRemaining > 0) && <GuessControls selectedCount={selectedIDs.length} onSubmit={submitGuess} onClear={clearSelection}/>}
 
             {/* If the game ended, show ending text */}
