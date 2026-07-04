@@ -40,9 +40,9 @@ export default function Board({puzzle, initialTileOrder}: BoardProps) {
             }
 
             // Otherwise, if not already selected and less than four, return the same array but with id added on
+            setCannotPlay(false);
             return [...current, id];
         });
-        setCannotPlay(false);
     };
 
     function clearSelection() {
