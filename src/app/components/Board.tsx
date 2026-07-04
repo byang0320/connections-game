@@ -13,9 +13,10 @@ interface BoardProps {
 }
 
 export default function Board({puzzle, initialTileOrder}: BoardProps) {
-    const [selectedIDs, setSelectedIDs] = useState<string[]>([]);
-    const [solvedGroupIDs, setSolvedGroupIDs] = useState<string[]>([]);
-    const [mistakesRemaining, setMistakesRemaining] = useState(4);
+    const [selectedIDs, setSelectedIDs] = useState<string[]>([]); // Array of selected tiles
+    const [solvedGroupIDs, setSolvedGroupIDs] = useState<string[]>([]); // Array of solved groups
+    const [mistakesRemaining, setMistakesRemaining] = useState(4); // Mistakes remaining
+    const [cannotPlay, setCannotPlay] = useState(false); // For greying out the Submit button immediately after a wrong move
     const [tileOrder] = useState(initialTileOrder); // Initial random shuffle of tiles
 
     // Determine which categories have already been solved in the order that they solved
@@ -41,6 +42,7 @@ export default function Board({puzzle, initialTileOrder}: BoardProps) {
             // Otherwise, if not already selected and less than four, return the same array but with id added on
             return [...current, id];
         });
+        setCannotPlay(false);
     };
 
     function clearSelection() {
@@ -65,6 +67,7 @@ export default function Board({puzzle, initialTileOrder}: BoardProps) {
 
             return nextMistakes;
         });
+        setCannotPlay(true);
     }
 
     // submitGuess contains all the logic to actually calculating if a submission is a correct category
@@ -100,7 +103,7 @@ export default function Board({puzzle, initialTileOrder}: BoardProps) {
             <p className="text-center text-xl">Mistakes Remaining: {mistakesRemaining}</p>
             
             {/* Guess Controls if there are still unsolved categories and mistakes remaining */}
-            {(unsolvedWords.length > 0 && mistakesRemaining > 0) && <GuessControls selectedCount={selectedIDs.length} onSubmit={submitGuess} onClear={clearSelection}/>}
+            {(unsolvedWords.length > 0 && mistakesRemaining > 0) && <GuessControls selectedCount={selectedIDs.length} onSubmit={submitGuess} onClear={clearSelection} cannotPlay={cannotPlay}/>}
 
             {/* If the game ended, show ending text */}
             {unsolvedWords.length === 0 && 
