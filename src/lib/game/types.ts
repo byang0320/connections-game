@@ -8,6 +8,9 @@ export type PuzzleGroup = {
 export type Puzzle = {
   id: string;
   title: string;
+  puzzleNumber: number;
+  publishedAt: string; // for example, 2026-07-04
+  description?: string;
   groups: PuzzleGroup[];
 };
 

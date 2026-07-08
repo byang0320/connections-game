@@ -1,6 +1,9 @@
 export const samplePuzzle = {
     id: "sample",
     title: "Sample Connections Board",
+    puzzleNumber: 0,
+    publishedAt: "1970-01-01",
+    description: "Sample puzzle found online.",
     groups: [
         {
             id: "rainbow-colors",

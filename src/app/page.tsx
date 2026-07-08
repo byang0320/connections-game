@@ -1,18 +1,33 @@
-import Board from "./components/Board";
-import { samplePuzzle } from "./lib/samplePuzzle";
-import { getAllTiles, shuffleTiles } from "../lib/game/puzzleEngine";
+// This is the home page: /
 
-// Makes this page generate a fresh shuffled order on each refresh
-// tileOrder is built only on the server (here) and reused by the client
-export const dynamic = "force-dynamic";
+import Link from "next/link";
+import { getTodaysPuzzle } from "@/lib/puzzles/queries";
 
-export default function Home() {
-  const initialTileOrder = shuffleTiles(getAllTiles(samplePuzzle));
+export default function HomePage() {
+  const todaysPuzzle = getTodaysPuzzle();
 
   return (
-    <main className="mx-auto max-w-2xl p-6">
-      <h1 className="mb-6 text-center text-3xl font-bold">{samplePuzzle.title}</h1>
-      <Board puzzle={samplePuzzle} initialTileOrder={initialTileOrder} />
+    <main className="mx-auto max-w-3xl px-6 py-12 text-center space-y-8">
+      <section className="space-y-4">
+        <h1 className="text-4xl font-bold">Connections by Brandon Yang</h1>
+        <p className="text-lg text-gray-600">
+          Welcome to my collection of Connections boards, all made uniquely by me!
+        </p>
+
+        <nav className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
+          <Link href={`/puzzles/${todaysPuzzle.id}`} className="rounded bg-black px-5 py-3 text-white">
+            Play today&apos;s puzzle
+          </Link>
+
+          <Link href="/puzzles" className="rounded border border-gray-300 px-5 py-3">
+            See all puzzles
+          </Link>
+
+          <Link href="/about" className="text-gray-600 underline">
+            About
+          </Link>
+        </nav>
+      </section>
     </main>
   );
 }
