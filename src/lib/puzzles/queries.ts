@@ -1,6 +1,6 @@
 // Main backend logic
 
-import type { Puzzle } from "@/lib/game/types";
+import type { Puzzle, PuzzleSummary } from "@/lib/game/types";
 import { validatePuzzle } from "@/lib/game/puzzleValidation";
 import { puzzles } from "./index";
 
@@ -29,7 +29,7 @@ export function getTodaysPuzzle(): Puzzle {
 }
 
 // Get information about each puzzle
-export function getPuzzleSummaries() {
+export function getPuzzleSummaries(): PuzzleSummary[] {
   return getAllPuzzles().map((puzzle) => ({
     id: puzzle.id,
     title: puzzle.title,

@@ -1,6 +1,6 @@
 // Path: /puzzles
 
-import Link from "next/link";
+import PuzzleCard from "../components/PuzzleCard";
 import { getPuzzleSummaries } from "@/lib/puzzles/queries";
 
 export default function PuzzlesPage() {
@@ -15,15 +15,7 @@ export default function PuzzlesPage() {
             
             <section className="space-y-4">
                 {puzzles.map((puzzle) => (
-                    // Can be a custom card later
-                    <article key={puzzle.id}>
-                        <Link href={`/puzzles/${puzzle.id}`} className="block rounded-lg border border-gray-300 p-5 hover:bg-gray-50">
-                            <h2 className="text-xl font-semibold">Puzzle #{puzzle.puzzleNumber}: {puzzle.title}</h2>
-                        </Link>
-                        <p className="text-sm text-gray-500">{puzzle.publishedAt}</p>
-
-                        {puzzle.description && <p className="mt-2 text-gray-600">{puzzle.description}</p>}
-                    </article>
+                    <PuzzleCard key={puzzle.id} puzzle={puzzle} />
                 ))}
             </section>
         </main>
