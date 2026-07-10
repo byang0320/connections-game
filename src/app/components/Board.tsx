@@ -5,23 +5,36 @@ import GuessControls from "./GuessControls";
 import SolvedGroup from "./SolvedGroup";
 
 import type { Puzzle, Tile } from "../../lib/game/types";
-import { checkGuess } from "../../lib/game/puzzleEngine";
+import { checkGuess, shuffleTiles } from "../../lib/game/puzzleEngine";
 
 const MISTAKES_ALLOWED = 4;
 const ERROR_DURATION_SECONDS = 5;
 
 interface BoardProps {
     puzzle: Puzzle,
-    initialTileOrder: Tile[], // Received from page.tsx
+    initialTileOrder: Tile[], // Received from /puzzles/[puzzle]
 }
 
 export default function Board({puzzle, initialTileOrder}: BoardProps) {
-    const [selectedIDs, setSelectedIDs] = useState<string[]>([]); // Array of selected tiles
-    const [solvedGroupIDs, setSolvedGroupIDs] = useState<string[]>([]); // Array of solved groups
-    const [mistakesRemaining, setMistakesRemaining] = useState(MISTAKES_ALLOWED); // Mistakes remaining
-    const [cannotPlay, setCannotPlay] = useState(false); // For greying out the Submit button immediately after a wrong move
-    const [incorrectMessage, setIncorrectMessage] = useState(""); // For showing incorrect selection messages
-    const [tileOrder] = useState(initialTileOrder); // Initial random shuffle of tiles
+    // Array of selected tiles
+    const [selectedIDs, setSelectedIDs] = useState<string[]>([]);
+
+    // Array of solved groups
+    const [solvedGroupIDs, setSolvedGroupIDs] = useState<string[]>([]);
+
+    // Mistakes remaining
+    const [mistakesRemaining, setMistakesRemaining] = useState(MISTAKES_ALLOWED);
+
+    // For greying out the Submit button immediately after a wrong move
+    const [cannotPlay, setCannotPlay] = useState(false);
+
+    // For showing incorrect selection messages
+    const [incorrectMessage, setIncorrectMessage] = useState("");
+
+    // Initial random shuffle of tiles
+    const [tileOrder, setTileOrder] = useState(initialTileOrder);
+
+
 
     // Determine which categories have already been solved in the order that they solved
     const solvedGroups = solvedGroupIDs.map((groupID) => puzzle.groups.find((group) => group.id === groupID)).filter((group): group is Puzzle["groups"][number] => group !== undefined);
@@ -31,7 +44,7 @@ export default function Board({puzzle, initialTileOrder}: BoardProps) {
     const unsolvedWords = tileOrder.filter((tile) => !solvedGroupsSet.has(tile.groupId));
 
     // toggleSelection toggles a particular tile if not already four tiles have been toggled
-    const toggleSelection = (id: string) => {
+    function toggleSelection(id: string) {
         setSelectedIDs((current) => {
             if (current.includes(id)) {
                 // Return the array with all elements intact except for id (effectively untoggles it)
@@ -49,6 +62,12 @@ export default function Board({puzzle, initialTileOrder}: BoardProps) {
         });
     };
 
+    // Shuffle unsolved tiles
+    function handleShuffle() {
+        setTileOrder((current) => shuffleTiles(current));
+    }
+
+    // Clear selected tiles when "Deselect All" is clicked
     function clearSelection() {
         setSelectedIDs([]);
     }
@@ -57,6 +76,7 @@ export default function Board({puzzle, initialTileOrder}: BoardProps) {
         setMistakesRemaining((currentMistakes) => {
             const nextMistakes = currentMistakes - 1;
 
+            // Fail, so reveal all remaining categories
             if (nextMistakes <= 0) {
                 setSolvedGroupIDs((currentSolvedIDs) => {
                     // Determine which categories have yet to be solved
@@ -102,7 +122,7 @@ export default function Board({puzzle, initialTileOrder}: BoardProps) {
 
     // submitGuess determines if a submitted guess is a valid category
     // It moves words from unsolvedWords to the solvedGroupIDs set
-    const submitGuess = () => {
+    function submitGuess() {
         const result = checkGuess(selectedIDs, puzzle, solvedGroupIDs);
         if (result.status === "correct") {
             if (timeoutRef.current) {
@@ -145,7 +165,7 @@ export default function Board({puzzle, initialTileOrder}: BoardProps) {
             <p className="text-center text-xl">Mistakes Remaining: {mistakesRemaining}</p>
             
             {/* Guess Controls if there are still unsolved categories and mistakes remaining */}
-            {(unsolvedWords.length > 0 && mistakesRemaining > 0) && <GuessControls selectedCount={selectedIDs.length} onSubmit={submitGuess} onClear={clearSelection} cannotPlay={cannotPlay}/>}
+            {(unsolvedWords.length > 0 && mistakesRemaining > 0) && <GuessControls selectedCount={selectedIDs.length} onShuffle={handleShuffle} onSubmit={submitGuess} onClear={clearSelection} cannotPlay={cannotPlay}/>}
 
             {/* If the game ended, show ending text */}
             {unsolvedWords.length === 0 && 
