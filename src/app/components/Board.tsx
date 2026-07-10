@@ -156,7 +156,7 @@ export default function Board({puzzle, initialTileOrder}: BoardProps) {
                     )}
                     {/* Unsolved tiles */}
                     <div className="grid grid-cols-4 gap-3">
-                        {unsolvedWords.map((word) => <WordTile key={word.id} word={word.text} selected={selectedIDs.includes(word.id)} onClick={() => toggleSelection(word.id)}/>)}
+                        {unsolvedWords.map((word) => <WordTile key={word.id} word={word.text} selected={selectedIDs.includes(word.id)} onClick={() => toggleSelection(word.id)} selectedCount={selectedIDs.length}/>)}
                     </div>
                 </div>
             }
