@@ -3,6 +3,11 @@
 import Link from "next/link";
 import { getTodaysPuzzle } from "@/lib/puzzles/queries";
 
+export const metadata = {
+  title: 'Connections',
+  description: 'Connections made by Brandon Yang',
+};
+
 export default function HomePage() {
   const todaysPuzzle = getTodaysPuzzle();
 

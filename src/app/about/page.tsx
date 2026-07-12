@@ -1,5 +1,10 @@
 import Link from "next/link";
 
+export const metadata = {
+    title: 'About',
+    description: 'About Brandon',
+};
+
 export default function AboutPage() {
     return (
         <main className="mx-auto max-w-3xl px-6 py-10 space-y-6">

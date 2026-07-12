@@ -3,6 +3,11 @@
 import PuzzleCard from "../components/PuzzleCard";
 import { getPuzzleSummaries } from "@/lib/puzzles/queries";
 
+export const metadata = {
+    title: 'Puzzle Catalog',
+    description: 'Puzzle Catalog',
+};
+
 export default function PuzzlesPage() {
     const puzzles = getPuzzleSummaries();
 

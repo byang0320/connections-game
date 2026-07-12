@@ -6,8 +6,22 @@ import PuzzleHeader from "@/app/components/PuzzleHeader";
 import { getAllPuzzles, getPuzzleByID } from "@/lib/puzzles/queries";
 import { getAllTiles, shuffleTiles } from "@/lib/game/puzzleEngine";
 
+import type { Metadata } from "next";
 type PuzzlePageProps = {
     params: Promise<{puzzleID: string;}>;
+}
+export async function generateMetadata({ params }: PuzzlePageProps): Promise<Metadata> {
+    const { puzzleID } = await params;
+    const puzzle = getPuzzleByID(puzzleID);
+    if (!puzzle) {
+        return {
+        title: "Puzzle Not Found",
+        };
+    }
+    return {
+        title: `Puzzle #${puzzle.puzzleNumber}`,
+        description: `Puzzle #${puzzle.puzzleNumber}`,
+    };
 }
 
 export default async function PuzzlePage({ params }: PuzzlePageProps) {
