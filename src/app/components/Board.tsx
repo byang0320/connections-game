@@ -3,11 +3,14 @@ import { useState, useEffect, useRef } from "react";
 import WordTile from "./WordTile";
 import GuessControls from "./GuessControls";
 import SolvedGroup from "./SolvedGroup";
+import MistakesRemaining from "./MistakesRemaining";
 
 import type { Puzzle, Tile } from "../../lib/game/types";
 import { checkGuess, shuffleTiles } from "../../lib/game/puzzleEngine";
 
+// Eventually... add an option to configure these on a settings page
 const MISTAKES_ALLOWED = 4;
+const IS_NUMERIC = false;
 const ERROR_DURATION_SECONDS = 5;
 
 interface BoardProps {
@@ -162,7 +165,7 @@ export default function Board({puzzle, initialTileOrder}: BoardProps) {
             }
 
             {/* Mistakes remaining text */}
-            <p className="text-center text-xl">Mistakes Remaining: {mistakesRemaining}</p>
+            <MistakesRemaining mistakes={mistakesRemaining} numeric={IS_NUMERIC} />
             
             {/* Guess Controls if there are still unsolved categories and mistakes remaining */}
             {(unsolvedWords.length > 0 && mistakesRemaining > 0) && <GuessControls selectedCount={selectedIDs.length} onShuffle={handleShuffle} onSubmit={submitGuess} onClear={clearSelection} cannotPlay={cannotPlay}/>}
