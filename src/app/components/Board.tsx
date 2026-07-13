@@ -6,7 +6,7 @@ import SolvedGroup from "./SolvedGroup";
 import MistakesRemaining from "./MistakesRemaining";
 
 import type { Puzzle, Tile } from "../../lib/game/types";
-import { checkGuess, shuffleTiles } from "../../lib/game/puzzleEngine";
+import { checkGuess, getAllTiles, shuffleTiles } from "../../lib/game/puzzleEngine";
 
 // Eventually... add an option to configure these on a settings page
 const MISTAKES_ALLOWED = 4;
@@ -15,10 +15,18 @@ const ERROR_DURATION_SECONDS = 5;
 
 interface BoardProps {
     puzzle: Puzzle,
-    initialTileOrder: Tile[], // Received from /puzzles/[puzzle]
 }
 
-export default function Board({puzzle, initialTileOrder}: BoardProps) {
+// For localStorage state persistence
+type SavedBoardState = {
+    selectedIDs: string[];
+    solvedGroupIDs: string[];
+    mistakesRemaining: number;
+    cannotPlay: boolean;
+    tileOrder: Tile[];
+};
+
+export default function Board({ puzzle }: BoardProps) {
     // Array of selected tiles
     const [selectedIDs, setSelectedIDs] = useState<string[]>([]);
 
@@ -34,8 +42,71 @@ export default function Board({puzzle, initialTileOrder}: BoardProps) {
     // For showing incorrect selection messages
     const [incorrectMessage, setIncorrectMessage] = useState("");
 
-    // Initial random shuffle of tiles
-    const [tileOrder, setTileOrder] = useState(initialTileOrder);
+    // Current order of all tiles
+    const [tileOrder, setTileOrder] = useState<Tile[]>([]);
+
+
+    // Whether we have finished checking localStorage
+    const [hasLoadedProgress, setHasLoadedProgress] = useState(false);
+
+    // Unique localStorage entry for every puzzle
+    const storageKey = `connections-progress:${puzzle.id}`;
+
+    // Load data from localStorage
+    useEffect(() => {
+        const unshuffledTileOrder = getAllTiles(puzzle);
+        const savedJSON = localStorage.getItem(storageKey);
+        if (savedJSON) {
+            try {
+                const savedState = JSON.parse(savedJSON) as SavedBoardState;
+                const savedStateLooksValid = Array.isArray(savedState.selectedIDs) && Array.isArray(savedState.solvedGroupIDs) && Array.isArray(savedState.tileOrder) && savedState.tileOrder.length === unshuffledTileOrder.length;
+                if (savedStateLooksValid) {
+                    setSelectedIDs(savedState.selectedIDs);
+                    setSolvedGroupIDs(savedState.solvedGroupIDs);
+                    setMistakesRemaining(savedState.mistakesRemaining);
+                    setCannotPlay(savedState.cannotPlay);
+                    setTileOrder(savedState.tileOrder);
+
+                    setHasLoadedProgress(true);
+                    return;
+                }
+            } catch {
+                // Saved JSON is corrupted, so throw it away
+                localStorage.removeItem(storageKey);
+            }
+        }
+        
+        // No valid saved game exists, so create one with random initial order
+        setTileOrder(shuffleTiles(unshuffledTileOrder));
+        setHasLoadedProgress(true);
+    }, [storageKey, puzzle]);
+    
+    // Run whenever any of the dependent states changes
+    useEffect(() => {
+        if (!hasLoadedProgress) {
+            return;
+        }
+        const stateToSave: SavedBoardState = {selectedIDs, solvedGroupIDs, mistakesRemaining, cannotPlay, tileOrder};
+        localStorage.setItem(storageKey, JSON.stringify(stateToSave));
+    }, [hasLoadedProgress, storageKey, selectedIDs, solvedGroupIDs, mistakesRemaining, cannotPlay, tileOrder]);
+
+    // Resets all state information (equivalent to a memory clear)
+    function handleRestart() {
+        localStorage.removeItem(storageKey);
+
+        setSelectedIDs([]);
+        setSolvedGroupIDs([]);
+        setMistakesRemaining(MISTAKES_ALLOWED);
+        setCannotPlay(false);
+        setIncorrectMessage("");
+
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+            timeoutRef.current = null;
+        }
+        // New randomized board
+        setTileOrder(shuffleTiles(getAllTiles(puzzle)));
+    }
 
 
 
@@ -114,7 +185,7 @@ export default function Board({puzzle, initialTileOrder}: BoardProps) {
         }, ERROR_DURATION_SECONDS * 1000);
     }
 
-    // Cleanup on unmount
+    // Cleanup timer on unmount
     useEffect(() => {
         return () => {
             if (timeoutRef.current) {
@@ -145,6 +216,13 @@ export default function Board({puzzle, initialTileOrder}: BoardProps) {
         }
     };
 
+    // Temporary loading text while the puzzle loads
+    if (!hasLoadedProgress) {
+        return (
+            <div className="py-10 text-center text-gray-500">Loading puzzle...</div>
+        )
+    }
+
     return (
         <div className="space-y-6">
             {/* First cover the solved groups */}
@@ -170,11 +248,15 @@ export default function Board({puzzle, initialTileOrder}: BoardProps) {
             {/* Guess Controls if there are still unsolved categories and mistakes remaining */}
             {(unsolvedWords.length > 0 && mistakesRemaining > 0) && <GuessControls selectedCount={selectedIDs.length} onShuffle={handleShuffle} onSubmit={submitGuess} onClear={clearSelection} cannotPlay={cannotPlay}/>}
 
-            {/* If the game ended, show ending text */}
+            {/* If the game ended, show ending text and a button to restart (can be changed later) */}
             {unsolvedWords.length === 0 && 
-                (mistakesRemaining > 0 ? 
-                <p className="text-center text-xl font-bold">You solved the board!</p> : 
-                <p className="text-center text-xl font-bold">Better luck next time!</p>)
+                <div className="space-y-4 text-center">
+                    <p className="text-xl font-bold">
+                        {mistakesRemaining > 0 ? "You solved the board!" : "Better luck next time!"}
+                    </p>
+
+                    <button onClick={handleRestart} className="rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-700">Restart Puzzle</button>
+                </div>
             }
         </div>
     );
